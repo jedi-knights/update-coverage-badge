@@ -1,7 +1,5 @@
 # update-coverage-badge
 
-[![Coverage](https://img.shields.io/badge/Coverage-0%25-red)](https://jedi-knights.github.io/update-coverage-badge/)
-
 A GitHub Action that runs your project's coverage command, updates the shields.io badge in `README.md` via [`jedi-knights/coverage-badge`](https://github.com/jedi-knights/coverage-badge), and commits the result back to the repository. Handles Python + uv setup internally.
 
 ## Usage
