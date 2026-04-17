@@ -1,9 +1,5 @@
-name: Update Coverage Badge
-description: >-
-  Runs the project's coverage command, updates the shields.io badge in
-  README.md via jedi-knights/coverage-badge, and commits the result back
-  to the repository. Handles Python + uv setup internally.
-author: jedi-knights
+name: 'Update Coverage Badge by Jedi Knights'
+description: 'Runs the coverage command, updates the shields.io badge in README.md, and commits the result. Handles Python + uv setup internally.'
 
 branding:
   icon: shield
