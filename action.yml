@@ -1,0 +1,98 @@
+name: Update Coverage Badge
+description: >-
+  Runs the project's coverage command, updates the shields.io badge in
+  README.md via jedi-knights/coverage-badge, and commits the result back
+  to the repository. Handles Python + uv setup internally.
+author: jedi-knights
+
+branding:
+  icon: shield
+  color: green
+
+inputs:
+  github-token:
+    description: GitHub token used to push the badge commit.
+    required: true
+  python-version:
+    description: Python version to use.
+    required: false
+    default: '3.13'
+  uv-version:
+    description: uv version to install. Defaults to latest.
+    required: false
+    default: latest
+  coverage-command:
+    description: Shell command that produces the coverage report file.
+    required: false
+    default: uv run invoke coverage
+  index-name:
+    description: Named private index declared in pyproject.toml [[tool.uv.index]].
+    required: false
+    default: ''
+  index-username:
+    description: Username for the private index.
+    required: false
+    default: ''
+  index-password:
+    description: Password or token for the private index.
+    required: false
+    default: ''
+  commit-message:
+    description: Commit message used when pushing the badge update.
+    required: false
+    default: 'chore: update coverage badge [skip ci]'
+
+outputs:
+  coverage-percentage:
+    description: Coverage percentage as a bare number (e.g. "87.5").
+    value: ${{ steps.badge.outputs.coverage-percentage }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v8
+      with:
+        version: ${{ inputs.uv-version }}
+        enable-cache: true
+        cache-dependency-glob: uv.lock
+
+    - name: Install dependencies
+      shell: bash
+      env:
+        _IDX_NAME: ${{ inputs.index-name }}
+        _IDX_USER: ${{ inputs.index-username }}
+        _IDX_PASS: ${{ inputs.index-password }}
+      run: |
+        if [ -n "$_IDX_NAME" ]; then
+          UPPER=$(echo "$_IDX_NAME" | tr '[:lower:]-' '[:upper:]_')
+          export "UV_INDEX_${UPPER}_USERNAME=$_IDX_USER"
+          export "UV_INDEX_${UPPER}_PASSWORD=$_IDX_PASS"
+        fi
+        uv sync --locked
+
+    - name: Generate coverage report
+      shell: bash
+      run: ${{ inputs.coverage-command }}
+
+    - name: Update coverage badge
+      id: badge
+      uses: jedi-knights/coverage-badge@v0
+
+    - name: Commit badge
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        git config user.name  "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git diff --quiet README.md || (
+          git add README.md &&
+          git commit -m "${{ inputs.commit-message }}" &&
+          git push
+        )
